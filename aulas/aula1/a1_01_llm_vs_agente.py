@@ -29,8 +29,8 @@ def main() -> None:
     # │  Dica: obter_llm() devolve o chat model. Todo chat model do LangChain tem o método .invoke(texto).
     # │  Copilot Chat: "Crie llm com obter_llm() e chame llm.invoke(PERGUNTA), guardando em resposta_pura"
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
-    llm = ___()
-    resposta_pura = llm.___(PERGUNTA)
+    llm = obter_llm()
+    resposta_pura = llm.invoke(PERGUNTA)
     print("=== 1) LLM puro (sem ferramentas) ===")
     print(texto_de(resposta_pura))
 

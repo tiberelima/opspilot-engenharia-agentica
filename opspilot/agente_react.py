@@ -47,9 +47,9 @@ def criar_agente_react(ferramentas: list | None = None, checkpointer=None):
     # │  Copilot Chat: "Crie o agente com create_agent passando model=obter_llm(), tools=ferramentas or TODAS_FERRAMENTAS, system_prompt=montar_prompt_sistema() e checkpointer=checkpointer"
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
     agente = create_agent(
-        model=___,
-        tools=___,
-        system_prompt=___,
+        model=obter_llm(),
+        tools=ferramentas or TODAS_FERRAMENTAS,
+        system_prompt=montar_prompt_sistema(),
         checkpointer=checkpointer,
         name="opspilot-react",
     )
@@ -77,4 +77,4 @@ def perguntar(agente, pergunta: str, thread_id: str | None = None) -> str:
     # │  Dica: O estado retornado é um dicionário. A chave "messages" tem o histórico inteiro (usuário, chamadas de ferramenta, observações...). A resposta final é a ÚLTIMA mensagem; use texto_de() para extrair o texto com segurança.
     # │  Copilot Chat: "Retorne o texto da última mensagem de resultado["messages"] usando a função texto_de"
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
-    return texto_de(resultado[___][___])
+    return texto_de(resultado["messages"][-1])

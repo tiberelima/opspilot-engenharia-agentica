@@ -67,7 +67,7 @@ def _normalizar(texto: str) -> list[str]:
 # │  Dica: O LangChain tem um decorator que lê o nome, a docstring e os tipos da função para gerar o schema da ferramenta. Ele já foi importado no topo do arquivo.
 # │  Copilot Chat: "Transforme a função consultar_metricas em uma ferramenta LangChain usando o decorator importado de langchain_core.tools"
 # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
-@___
+@tool
 def consultar_metricas(servico: str) -> str:
     """Consulta as métricas atuais de UM serviço e compara com o baseline.
 
@@ -86,7 +86,7 @@ def consultar_metricas(servico: str) -> str:
     # │  Copilot Chat: "Se o serviço não estiver em metricas, retorne uma string de erro amigável listando os serviços válidos separados por vírgula"
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
     if nome not in metricas:
-        return ___
+        return f"ERRO: serviço '{servico}' não encontrado. Serviços válidos: {', '.join(sorted(metricas))}."
 
     return json.dumps({"servico": nome, **metricas[nome]}, ensure_ascii=False, indent=2)
 
@@ -182,9 +182,7 @@ def abrir_ticket(
         "resumo": resumo,
         "origem": "opspilot",
     }
-    (DIR_TICKETS / f"{ticket_id}.json").write_text(
-        json.dumps(ticket, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    (DIR_TICKETS / f"{ticket_id}.json").write_text(json.dumps(ticket, ensure_ascii=False, indent=2), encoding="utf-8")
     return f"Ticket {ticket_id} aberto ({severidade}) para {servico}."
 
 
