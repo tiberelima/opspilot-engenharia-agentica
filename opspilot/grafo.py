@@ -35,18 +35,18 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache
-from typing import Annotated, Literal, NotRequired, TypedDict
-
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from langgraph.types import RetryPolicy, interrupt
 from pydantic import BaseModel, Field
+from typing import Annotated, Literal, NotRequired, TypedDict
 
 from opspilot.config import obter_llm
 from opspilot.prompts import PROMPT_CLASSIFICADOR, PROMPT_EXTRATOR_DIAGNOSTICO, montar_prompt_sistema
-from opspilot.tools import FERRAMENTAS_LEITURA, abrir_ticket, buscar_runbook, servicos_conhecidos
+from opspilot.tools import FERRAMENTAS_LEITURA, abrir_ticket, buscar_runbook, servicos_conhecidos, \
+    notificar_canal
 from opspilot.util import texto_de
 
 #: Quantas vezes o validador pode mandar o agente investigar de novo.
@@ -96,7 +96,7 @@ class EstadoOps(TypedDict):
     # │  Dica: Sem reducer, cada nó que retorna "messages" SOBRESCREVE o histórico. Use Annotated[list[AnyMessage], <reducer>] — o reducer padrão do LangGraph para mensagens já está importado.
     # │  Copilot Chat: "Declare o campo messages como Annotated de list[AnyMessage] usando o reducer add_messages do LangGraph"
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
-    messages: Annotated[list[AnyMessage], ___]
+    messages: Annotated[list[AnyMessage], add_messages]
     categoria: NotRequired[str]
     servico: NotRequired[str | None]
     diagnostico: NotRequired[dict | None]
@@ -220,7 +220,7 @@ def investigar(estado: EstadoOps) -> dict:
     instrucao = SystemMessage(
         montar_prompt_sistema()
         + "\n\nNesta etapa você SÓ investiga (não abra tickets). Quando tiver evidências "
-        "suficientes, escreva o diagnóstico no formato pedido, sem chamar ferramentas."
+          "suficientes, escreva o diagnóstico no formato pedido, sem chamar ferramentas."
     )
     resposta = modelo.invoke([instrucao, *estado["messages"]])
     return {"messages": [resposta]}
@@ -271,7 +271,7 @@ def aprovar_ticket(estado: EstadoOps) -> dict:
     # │  Dica: interrupt(valor) pausa o grafo e mostra `valor` para quem chamou. Quando o grafo for retomado com Command(resume="sim"), interrupt(...) RETORNA "sim".
     # │  Copilot Chat: "Chame interrupt passando um dicionário com a pergunta "Abrir ticket?" e o rascunho do ticket (servico, severidade, causa_raiz) e guarde o retorno em decisao"
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
-    decisao = ___(
+    decisao = interrupt(
         {
             "pergunta": "Abrir ticket com este diagnóstico? (sim/nao)",
             "rascunho": {k: diag.get(k) for k in ("servico_causa_raiz", "severidade", "causa_raiz")},
@@ -279,6 +279,10 @@ def aprovar_ticket(estado: EstadoOps) -> dict:
     )
     return {"ticket_aprovado": str(decisao).strip().lower().startswith(("s", "y", "a"))}
 
+
+def notificar(estado: EstadoOps) -> dict:
+    """Efeito colateral controlado: só chega aqui depois de aprovação."""
+    return notificar_canal.invoke(estado.get("ticket"))
 
 def executar_abertura_ticket(estado: EstadoOps) -> dict:
     """Efeito colateral controlado: só chega aqui depois de aprovação."""
@@ -333,8 +337,8 @@ def rota_por_categoria(estado: EstadoOps) -> Literal["investigar", "responder_du
     # │  Dica: Mapeie cada categoria para o nome do NÓ seguinte: incidente→investigar, duvida→responder_duvida; qualquer outra coisa→recusar (o default é a rota segura).
     # │  Copilot Chat: "Retorne o nome do próximo nó com base em estado.get("categoria"): incidente -> "investigar", duvida -> "responder_duvida", caso contrário "recusar""
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
-    destinos = {"incidente": ___, "duvida": ___}
-    return destinos.get(estado.get("categoria"), ___)
+    destinos = {"incidente": "investigar", "duvida": "responder_duvida"}
+    return destinos.get(estado.get("categoria"), "recusar")
 
 
 def rota_investigacao(estado: EstadoOps) -> Literal["ferramentas", "validar"]:
@@ -344,7 +348,7 @@ def rota_investigacao(estado: EstadoOps) -> Literal["ferramentas", "validar"]:
     # │  Dica: Uma AIMessage que pede ferramenta tem a lista `tool_calls` não vazia. Use getattr(ultima, "tool_calls", None) para não quebrar com outros tipos de mensagem.
     # │  Copilot Chat: "Retorne "ferramentas" se a última mensagem tiver tool_calls não vazio, senão "validar""
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
-    return "ferramentas" if ___ else "validar"
+    return "ferramentas" if getattr(ultima, "tool_calls", None) else "validar"
 
 
 def rota_validacao(estado: EstadoOps) -> Literal["investigar", "escalar_humano", "aprovar_ticket", "responder"]:
@@ -355,9 +359,9 @@ def rota_validacao(estado: EstadoOps) -> Literal["investigar", "escalar_humano",
     # │  Copilot Chat: "Implemente a rota: com problemas e tentativas < MAX_TENTATIVAS -> "investigar"; com problemas e tentativas esgotadas -> "escalar_humano"; sem problemas e severidade SEV1/SEV2 -> "aprovar_ticket"; senão "responder""
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
     if problemas:
-        return "investigar" if estado.get("tentativas", 0) < ___ else ___
+        return "investigar" if estado.get("tentativas", 0) < MAX_TENTATIVAS else "escalar_humano"
     severidade = (estado.get("diagnostico") or {}).get("severidade")
-    return "aprovar_ticket" if severidade in (___, ___) else "responder"
+    return "aprovar_ticket" if severidade in ("SEV1", "SEV2") else "responder"
 
 
 def rota_aprovacao(estado: EstadoOps) -> Literal["abrir_ticket", "responder"]:
@@ -403,9 +407,14 @@ def construir_grafo(aprovacao_humana: bool = True, checkpointer=None):
     if aprovacao_humana:
         g.add_node("aprovar_ticket", aprovar_ticket)
         g.add_node("abrir_ticket", executar_abertura_ticket)
+        g.add_node("notificar", notificar)
+
         g.add_conditional_edges("validar", rota_validacao)
         g.add_conditional_edges("aprovar_ticket", rota_aprovacao)
-        g.add_edge("abrir_ticket", "responder")
+
+        g.add_edge("abrir_ticket", "notificar")
+        g.add_edge("notificar", "responder")
+
     else:
         # Sem humano no loop: sucesso vai direto para a resposta.
         def rota_validacao_sem_ticket(estado: EstadoOps) -> Literal["investigar", "escalar_humano", "responder"]:
@@ -421,4 +430,4 @@ def construir_grafo(aprovacao_humana: bool = True, checkpointer=None):
     # │  Dica: compile() aceita checkpointer=... É ele que permite pausar no interrupt e retomar depois (até em outro processo, com SqliteSaver).
     # │  Copilot Chat: "Compile o grafo g passando o checkpointer recebido e o nome "opspilot-fsm""
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=2`
-    return g.compile(checkpointer=___, name="opspilot-fsm")
+    return g.compile(checkpointer=checkpointer, name="opspilot-fsm")

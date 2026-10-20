@@ -57,7 +57,8 @@ FORMATO = (
     "**Evidências:** lista com 2 a 4 itens; cada item cita uma métrica ou linha de log.\n"
     "**Sintomas vs. causa:** o que é efeito colateral e por quê.\n"
     "**Ação recomendada:** mitigação imediata + prevenção (citando o runbook).\n"
-    "**Severidade:** SEV1, SEV2 ou SEV3 com justificativa curta."
+    "**Severidade:** SEV1, SEV2 ou SEV3 com justificativa curta.\n"
+    "**Notificação:** informações sobre a notificação necessária."
 )
 
 RESTRICOES = (

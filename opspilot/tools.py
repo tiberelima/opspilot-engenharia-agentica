@@ -31,11 +31,11 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timezone
+from langchain_core.tools import tool
 from typing import Literal
 
-from langchain_core.tools import tool
-
 from opspilot.config import ARQ_METRICAS, DIR_LOGS, DIR_RUNBOOKS, DIR_TICKETS
+
 
 # --------------------------------------------------------------------------- #
 # Funções auxiliares (não são ferramentas: o LLM não as enxerga)
@@ -90,6 +90,21 @@ def consultar_metricas(servico: str) -> str:
 
     return json.dumps({"servico": nome, **metricas[nome]}, ensure_ascii=False, indent=2)
 
+
+@tool
+def notificar_canal(ticket: str) -> str:
+    """Envia uma mensagem para o canal de alertas do serviço. TEM EFEITO COLATERAL.
+
+    Use para avisar a equipe de SRE/DevOps sobre um ticket aberto.
+    Ex.: "SEV1: checkout-api com latência 3x acima do normal desde 14:32 UTC".
+
+    Args:
+        ticket: ticket aberto.
+    """
+    # ticket = (DIR_TICKETS / f"{ticket_id}.json").read_text(encoding="utf-8")
+    if ticket is not None:
+        return {"Notificando canal de incidentes": ticket}
+    return f"Ticket {servico} não foi encontrado."
 
 @tool
 def ler_logs(servico: str, filtro: str = "", max_linhas: int = 20) -> str:
@@ -154,10 +169,10 @@ def buscar_runbook(consulta: str) -> str:
 
 @tool
 def abrir_ticket(
-    titulo: str,
-    servico: str,
-    severidade: Literal["SEV1", "SEV2", "SEV3"],
-    resumo: str,
+        titulo: str,
+        servico: str,
+        severidade: Literal["SEV1", "SEV2", "SEV3"],
+        resumo: str,
 ) -> str:
     """Abre um ticket de incidente no sistema da empresa. TEM EFEITO COLATERAL.
 
@@ -190,8 +205,11 @@ def abrir_ticket(
 # Conjuntos de ferramentas reutilizados nas próximas aulas
 # --------------------------------------------------------------------------- #
 
+#: Notificação: seguras para o agente usar livremente (e para sub-agentes).
+FERRAMENTAS_NOTIFICACAO = [notificar_canal]
+
 #: Só leitura: seguras para o agente usar livremente (e para sub-agentes).
 FERRAMENTAS_LEITURA = [consultar_metricas, ler_logs, buscar_runbook]
 
 #: Todas, incluindo a de escrita. Na Aula 2/3 ``abrir_ticket`` passa por aprovação humana.
-TODAS_FERRAMENTAS = [*FERRAMENTAS_LEITURA, abrir_ticket]
+TODAS_FERRAMENTAS = [*FERRAMENTAS_LEITURA, *FERRAMENTAS_NOTIFICACAO, abrir_ticket]

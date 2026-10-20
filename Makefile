@@ -1,6 +1,6 @@
 # Atalhos da turma. Rode `make` (sem nada) para ver a lista.
 # Em todos os comandos, o Python usado é o do Codespace.
-PY ?= python
+PY ?= py
 
 # Arquivos que cada aula completa (usados pelo "pegar o bonde").
 ARQ_AULA1 = opspilot/tools.py opspilot/prompts.py opspilot/agente_react.py aulas/aula1
