@@ -1,0 +1,8 @@
+1. Ler o incidente em /base/incidentes/INC-2041.md e identificar serviço(s), janela e sintomas.
+2. Consultar métricas do(s) serviço(s) relevante(s) para obter números e baseline.
+3. Delegar análise de logs, runbook e triagem FSM em paralelo para validar causa raiz.
+4. Salvar as evidências recebidas em /notas/ por assunto.
+5. Escrever o post-mortem em /relatorios/postmortem-INC-2041.md no formato padrão.
+6. Revalidar cada número/horário contra as notas e corrigir inconsistências.
+7. Atualizar /memoria/AGENTS.md com uma lição aprendida, se houver.
+8. Abrir ticket do incidente com diagnóstico validado.

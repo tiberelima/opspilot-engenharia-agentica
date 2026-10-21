@@ -1,0 +1,8 @@
+- [ ] Ler o incidente e confirmar escopo/sintomas vs causa
+- [ ] Coletar métricas e linha do tempo dos serviços envolvidos
+- [ ] Delegar análise de logs por serviço relevante
+- [ ] Consultar runbook oficial e validar diagnóstico com triagem FSM
+- [ ] Redigir post-mortem em formato padrão com evidências
+- [ ] Autocorrigir números/afirmações conferindo notas e ajustar relatório
+- [ ] Atualizar lições aprendidas em AGENTS.md se houver padrão reutilizável
+- [ ] Abrir ticket com diagnóstico validado

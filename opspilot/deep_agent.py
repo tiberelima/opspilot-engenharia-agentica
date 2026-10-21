@@ -44,7 +44,8 @@ from opspilot.tools import abrir_ticket, buscar_runbook, consultar_metricas, ler
 # Prompts
 # --------------------------------------------------------------------------- #
 
-PROMPT_COMANDANTE = """Você é o OpsPilot Comandante de Incidente da MercadoNimbus.
+
+PROMPT_ORQUESTRADOR = """Você é o OpsPilot, o agente orquestrador de investigação de incidentes da MercadoNimbus.
 Sua missão é conduzir investigações complexas de ponta a ponta e entregar um
 post-mortem impecável, com cada afirmação apoiada em evidência.
 
@@ -77,13 +78,16 @@ post-mortem impecável, com cada afirmação apoiada em evidência.
 # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=3`
 ANALISTA_DE_LOGS: SubAgent = {
     "name": "analista-de-logs",
-    "description": ___,
+    "description": (
+        "Analisa logs e métricas de UM serviço e devolve linha do tempo, anomalias e "
+        "linhas de log literais como evidência. Use uma delegação por serviço."
+    ),
     "system_prompt": (
         "Você analisa UM serviço por vez. Use ler_logs (filtros ERROR, WARN, pool, deploy) e "
         "consultar_metricas. Devolva: linha do tempo UTC, anomalias vs. baseline e as linhas "
         "de log LITERAIS que sustentam cada conclusão. Máximo 15 linhas."
     ),
-    "tools": [___, ___],
+    "tools": [ler_logs, consultar_metricas],
 }
 
 PESQUISADOR_DE_RUNBOOKS: SubAgent = {
@@ -109,7 +113,7 @@ def criar_subagente_triagem() -> CompiledSubAgent:
     return {
         "name": "triagem-fsm",
         "description": "Fluxo determinístico da Aula 2: classifica, investiga e devolve um diagnóstico VALIDADO por regras (com evidências checadas).",
-        "runnable": ___,
+        "runnable": construir_grafo(aprovacao_humana=False),
     }
 
 
@@ -130,8 +134,8 @@ def criar_backend() -> CompositeBackend:
     # │  Copilot Chat: "Retorne um CompositeBackend cujo default é FilesystemBackend(root_dir=DIR_WORKSPACE, virtual_mode=True) e com a rota "/base/" para FilesystemBackend(root_dir=DIR_DADOS, virtual_mode=True)"
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=3`
     return CompositeBackend(
-        default=FilesystemBackend(root_dir=___, virtual_mode=True),
-        routes={___: FilesystemBackend(root_dir=___, virtual_mode=True)},
+        default=FilesystemBackend(root_dir=DIR_WORKSPACE, virtual_mode=True),
+        routes={"/base/": FilesystemBackend(root_dir=DIR_DADOS, virtual_mode=True)},
     )
 
 
@@ -158,12 +162,12 @@ def criar_deep_agent(checkpointer=None):
     return create_deep_agent(
         model=obter_llm(),
         tools=[consultar_metricas, abrir_ticket],
-        system_prompt=PROMPT_COMANDANTE,
-        subagents=[___, ___, ___],
-        backend=___,
-        memory=[___],
+        system_prompt=PROMPT_ORQUESTRADOR,
+        subagents=[ANALISTA_DE_LOGS, PESQUISADOR_DE_RUNBOOKS, criar_subagente_triagem()],
+        backend=criar_backend(),
+        memory=["/memoria/AGENTS.md"],
         permissions=PERMISSOES,
-        interrupt_on={___: True},
+        interrupt_on={"abrir_ticket": True},
         checkpointer=checkpointer,
-        name="opspilot-comandante",
+        name="opspilot-orquestrador",
     )

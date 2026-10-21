@@ -7,7 +7,7 @@
 | Sub-agentes | `opspilot/deep_agent.py` | A3-L1, A3-L2 (o grafo da Aula 2 vira sub-agente) |
 | Sistema de arquivos | `opspilot/deep_agent.py` | A3-L3 |
 | Planejamento + Memória + tudo ligado | `opspilot/deep_agent.py` | A3-L4 |
-| Humano no loop do harness | `aulas/aula3/a3_01_comandante.py` | A3-L5 |
+| Humano no loop do harness | `a3_01_orquestrador.py` | A3-L5 |
 
 ```bash
 make bonde AULA=3        # (só se ficou para trás)

@@ -25,10 +25,7 @@ PERGUNTA = "Por que o checkout da MercadoNimbus está lento agora?"
 def main() -> None:
     print(f"Modelo em uso: {MODELO}\n")
 
-    # ┌─ LACUNA [A1-L1] Seu primeiro contato com o LLM
-    # │  Dica: obter_llm() devolve o chat model. Todo chat model do LangChain tem o método .invoke(texto).
-    # │  Copilot Chat: "Crie llm com obter_llm() e chame llm.invoke(PERGUNTA), guardando em resposta_pura"
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
+    # [A1-L1] ✔ Seu primeiro contato com o LLM
     llm = obter_llm()
     resposta_pura = llm.invoke(PERGUNTA)
     print("=== 1) LLM puro (sem ferramentas) ===")

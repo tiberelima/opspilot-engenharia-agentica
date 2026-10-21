@@ -31,11 +31,11 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timezone
-from langchain_core.tools import tool
 from typing import Literal
 
-from opspilot.config import ARQ_METRICAS, DIR_LOGS, DIR_RUNBOOKS, DIR_TICKETS
+from langchain_core.tools import tool
 
+from opspilot.config import ARQ_METRICAS, DIR_LOGS, DIR_RUNBOOKS, DIR_TICKETS
 
 # --------------------------------------------------------------------------- #
 # Funções auxiliares (não são ferramentas: o LLM não as enxerga)
@@ -63,10 +63,7 @@ def _normalizar(texto: str) -> list[str]:
 # --------------------------------------------------------------------------- #
 
 
-# ┌─ LACUNA [A1-L2] Transforme a função em uma ferramenta que o LLM enxerga
-# │  Dica: O LangChain tem um decorator que lê o nome, a docstring e os tipos da função para gerar o schema da ferramenta. Ele já foi importado no topo do arquivo.
-# │  Copilot Chat: "Transforme a função consultar_metricas em uma ferramenta LangChain usando o decorator importado de langchain_core.tools"
-# └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
+# [A1-L2] ✔ Transforme a função em uma ferramenta que o LLM enxerga
 @tool
 def consultar_metricas(servico: str) -> str:
     """Consulta as métricas atuais de UM serviço e compara com o baseline.
@@ -81,30 +78,15 @@ def consultar_metricas(servico: str) -> str:
     metricas = _carregar_metricas()
     nome = servico.strip().lower()
 
-    # ┌─ LACUNA [A1-L3] Erro vira observação (autocorreção do agente)
-    # │  Dica: Não lance exceção! Devolva um TEXTO dizendo que o serviço não existe e liste os válidos — o agente vai ler e tentar de novo com o nome certo.
-    # │  Copilot Chat: "Se o serviço não estiver em metricas, retorne uma string de erro amigável listando os serviços válidos separados por vírgula"
-    # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=1`
+    # [A1-L3] ✔ Erro vira observação (autocorreção do agente)
     if nome not in metricas:
-        return f"ERRO: serviço '{servico}' não encontrado. Serviços válidos: {', '.join(sorted(metricas))}."
+        return (
+            f"ERRO: serviço '{servico}' não encontrado. "
+            f"Serviços válidos: {', '.join(sorted(metricas))}."
+        )
 
     return json.dumps({"servico": nome, **metricas[nome]}, ensure_ascii=False, indent=2)
 
-
-@tool
-def notificar_canal(ticket: str) -> str:
-    """Envia uma mensagem para o canal de alertas do serviço. TEM EFEITO COLATERAL.
-
-    Use para avisar a equipe de SRE/DevOps sobre um ticket aberto.
-    Ex.: "SEV1: checkout-api com latência 3x acima do normal desde 14:32 UTC".
-
-    Args:
-        ticket: ticket aberto.
-    """
-    # ticket = (DIR_TICKETS / f"{ticket_id}.json").read_text(encoding="utf-8")
-    if ticket is not None:
-        return {"Notificando canal de incidentes": ticket}
-    return f"Ticket {servico} não foi encontrado."
 
 @tool
 def ler_logs(servico: str, filtro: str = "", max_linhas: int = 20) -> str:
@@ -169,10 +151,10 @@ def buscar_runbook(consulta: str) -> str:
 
 @tool
 def abrir_ticket(
-        titulo: str,
-        servico: str,
-        severidade: Literal["SEV1", "SEV2", "SEV3"],
-        resumo: str,
+    titulo: str,
+    servico: str,
+    severidade: Literal["SEV1", "SEV2", "SEV3"],
+    resumo: str,
 ) -> str:
     """Abre um ticket de incidente no sistema da empresa. TEM EFEITO COLATERAL.
 
@@ -197,7 +179,9 @@ def abrir_ticket(
         "resumo": resumo,
         "origem": "opspilot",
     }
-    (DIR_TICKETS / f"{ticket_id}.json").write_text(json.dumps(ticket, ensure_ascii=False, indent=2), encoding="utf-8")
+    (DIR_TICKETS / f"{ticket_id}.json").write_text(
+        json.dumps(ticket, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return f"Ticket {ticket_id} aberto ({severidade}) para {servico}."
 
 
@@ -205,11 +189,8 @@ def abrir_ticket(
 # Conjuntos de ferramentas reutilizados nas próximas aulas
 # --------------------------------------------------------------------------- #
 
-#: Notificação: seguras para o agente usar livremente (e para sub-agentes).
-FERRAMENTAS_NOTIFICACAO = [notificar_canal]
-
 #: Só leitura: seguras para o agente usar livremente (e para sub-agentes).
 FERRAMENTAS_LEITURA = [consultar_metricas, ler_logs, buscar_runbook]
 
 #: Todas, incluindo a de escrita. Na Aula 2/3 ``abrir_ticket`` passa por aprovação humana.
-TODAS_FERRAMENTAS = [*FERRAMENTAS_LEITURA, *FERRAMENTAS_NOTIFICACAO, abrir_ticket]
+TODAS_FERRAMENTAS = [*FERRAMENTAS_LEITURA, abrir_ticket]

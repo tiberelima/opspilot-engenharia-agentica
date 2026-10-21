@@ -41,7 +41,7 @@ aula2-grafo: ## Desenha o grafo da Aula 2 (sem chave)
 	$(PY) -m aulas.aula2.a2_02_desenhar_grafo
 
 aula3: ## Roda o Deep Agent no INC-2041
-	$(PY) -m aulas.aula3.a3_01_comandante
+	$(PY) -m aulas.aula3.a3_01_orquestrador
 
 aula4: ## Roda a FSM com tracing no Langfuse
 	$(PY) -m aulas.aula4.a4_01_tracing

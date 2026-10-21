@@ -25,3 +25,5 @@
 
 ## Lições aprendidas (o agente acrescenta abaixo, 1 linha por lição)
 - Fila de notificações crescendo costuma ser efeito colateral de retries da API produtora.
+- Quando a API está lenta com CPU baixa, priorize investigação de dependências e pool de conexões antes de escalar a aplicação.
+- Alertas de certificado expirando podem coexistir com incidentes de performance, mas não devem ser tratados como causa de latência sem evidência direta.
