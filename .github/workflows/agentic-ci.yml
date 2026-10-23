@@ -57,7 +57,7 @@ jobs:
       # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=4`
       - name: Avaliação + gate
         if: steps.chave.outputs.tem == 'sim'
-        run: python -m ___ --limite ___
+        run: python -m aulas.aula4.a4_02_avaliar --limite 0.75
       - name: Publica o relatório da avaliação
         if: always() && steps.chave.outputs.tem == 'sim'
         uses: actions/upload-artifact@v4

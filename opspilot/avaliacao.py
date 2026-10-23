@@ -70,7 +70,7 @@ def avaliar_regras(caso: Caso, resposta: str, estado: dict) -> dict[str, float]:
         # │  Dica: Compare diag.get("servico_causa_raiz") com caso.servico_causa_esperado e converta o booleano para float.
         # │  Copilot Chat: "Atribua a notas["servico_correto"] o float da comparação entre diag.get("servico_causa_raiz") e caso.servico_causa_esperado"
         # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=4`
-        notas["servico_correto"] = float(___ == ___)
+        notas["servico_correto"] = float(diag.get("servico_causa_raiz") == caso.servico_causa_esperado)
     return notas
 
 
@@ -108,8 +108,10 @@ def julgar_fundamentacao(pergunta: str, resposta: str, evidencias: str) -> NotaJ
     # │  Dica: Igual ao classificador da Aula 2: obter_llm(MODELO_JUIZ).with_structured_output(NotaJuiz) e depois .invoke(prompt formatado). Limite as evidências a ~6000 caracteres para controlar custo.
     # │  Copilot Chat: "Crie juiz com obter_llm(MODELO_JUIZ).with_structured_output(NotaJuiz) e retorne juiz.invoke(PROMPT_JUIZ.format(...)) com evidencias truncadas em 6000 caracteres"
     # └─ Troque cada ___ abaixo. Gabarito: `make gabarito-aula AULA=4`
-    juiz = obter_llm(MODELO_JUIZ).___(NotaJuiz)
-    return juiz.invoke(PROMPT_JUIZ.format(pergunta=pergunta, resposta=resposta, evidencias=___))
+    juiz = obter_llm(MODELO_JUIZ).with_structured_output(NotaJuiz)
+    return juiz.invoke(
+        PROMPT_JUIZ.format(pergunta=pergunta, resposta=resposta, evidencias=evidencias[:6000] or "(nenhuma)")
+    )
 
 
 # --------------------------------------------------------------------------- #
